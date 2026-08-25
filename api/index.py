@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-app = FastAPI(title="StratumMesh API", version="1.4.1")
+app = FastAPI(title="StratumMesh API", version="1.5.0")
 
 class PromptRequest(BaseModel):
     prompt: str
@@ -19,13 +19,10 @@ FALLBACK_CHAIN = [
 ]
 
 @app.get("/")
-@app.get("/api")
 def read_root():
-    return {"status": "StratumMesh core is online", "version": "1.4.1"}
+    return {"status": "StratumMesh core is online", "version": "1.5.0"}
 
-# We add both paths to catch the request no matter how Vercel formats the URL!
-@app.post("/api/route")
-@app.post("/route")
+@app.post("/api/index")
 def route_prompt(request: PromptRequest):
     last_error = None
     for model_name in FALLBACK_CHAIN:
