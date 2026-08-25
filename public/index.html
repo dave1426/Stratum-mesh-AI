@@ -46,10 +46,12 @@
             input.value = '';
             container.scrollTop = container.scrollHeight;
 
-            const aiDiv = document.createElement('div');
-            aiDiv.className = 'message ai';
-            aiDiv.innerHTML = '<i>Connecting to StratumMesh stream...</i>';
-            container.appendChild(aiDiv);
+            const loadingId = 'load-' + Date.now();
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'message ai';
+            loadingDiv.id = loadingId;
+            loadingDiv.textContent = 'Routing through StratumMesh...';
+            container.appendChild(loadingDiv);
             container.scrollTop = container.scrollHeight;
 
             try {
@@ -58,46 +60,28 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prompt: text })
                 });
-
-                if (!res.ok) throw new Error('Network response was not ok');
-
-                const reader = res.body.getReader();
-                const decoder = new TextDecoder();
-                let fullResponse = "";
-                let routedModel = "";
-
-                aiDiv.innerHTML = ""; // Clear loader text
-
-                while (true) {
-                    const { value, done } = await reader.read();
-                    if (done) break;
-
-                    const chunk = decoder.decode(value, { stream: true });
-                    const lines = chunk.split('\n');
-
-                    for (const line of lines) {
-                        if (!line.trim()) continue;
-                        try {
-                            const data = JSON.parse(line);
-                            if (data.type === "meta") {
-                                routedModel = data.routed_model;
-                            } else if (data.type === "content") {
-                                fullResponse += data.text;
-                                aiDiv.innerHTML = `<b>[Model: ${routedModel}]</b><br><br>` + marked.parse(fullResponse);
-                            } else if (data.type === "error") {
-                                aiDiv.style.color = '#f87171';
-                                aiDiv.textContent = 'Error: ' + data.detail;
-                            }
-                        } catch (e) {
-                            // Ignore partial JSON chunks
-                        }
-                    }
-                    container.scrollTop = container.scrollHeight;
+                const data = await res.json();
+                
+                document.getElementById(loadingId).remove();
+                
+                const aiDiv = document.createElement('div');
+                aiDiv.className = 'message ai';
+                if(data.success) {
+                    aiDiv.innerHTML = `<b>[Model: ${data.routed_model}]</b><br><br>` + marked.parse(data.response);
+                } else {
+                    aiDiv.style.color = '#f87171';
+                    aiDiv.textContent = 'Error: ' + (data.detail || 'Unknown error');
                 }
+                container.appendChild(aiDiv);
             } catch (err) {
-                aiDiv.style.color = '#f87171';
-                aiDiv.textContent = 'Stream error or network failure.';
+                document.getElementById(loadingId).remove();
+                const errDiv = document.createElement('div');
+                errDiv.className = 'message ai';
+                errDiv.style.color = '#f87171';
+                errDiv.textContent = 'Network or server error occurred.';
+                container.appendChild(errDiv);
             }
+            container.scrollTop = container.scrollHeight;
         }
     </script>
 </body>
