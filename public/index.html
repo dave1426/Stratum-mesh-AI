@@ -62,7 +62,8 @@
                 });
                 const data = await res.json();
                 
-                document.getElementById(loadingId).remove();
+                const loadElement = document.getElementById(loadingId);
+                if (loadElement) loadElement.remove();
                 
                 const aiDiv = document.createElement('div');
                 aiDiv.className = 'message ai';
@@ -74,7 +75,9 @@
                 }
                 container.appendChild(aiDiv);
             } catch (err) {
-                document.getElementById(loadingId).remove();
+                const loadElement = document.getElementById(loadingId);
+                if (loadElement) loadElement.remove();
+                
                 const errDiv = document.createElement('div');
                 errDiv.className = 'message ai';
                 errDiv.style.color = '#f87171';
